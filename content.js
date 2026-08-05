@@ -78,13 +78,13 @@
       try {
         const result = await uploadFile(file);
         uploaded += 1;
-        console.info('[Yandex Maps Photo Helper] Загружено:', {
+        console.info('[Yandex Maps Photo Uploader] Загружено:', {
           file: file.name,
           photoId: result.id,
           status: result.status
         });
       } catch (error) {
-        console.error('[Yandex Maps Photo Helper] Ошибка загрузки:', file.name, error);
+        console.error('[Yandex Maps Photo Uploader] Ошибка загрузки:', file.name, error);
         errors.push(`${file.name}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }

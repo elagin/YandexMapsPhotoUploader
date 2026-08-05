@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Yandex Maps Photo Helper",
+  "name": "Yandex Maps Photo Uploader",
   "version": "0.2.1",
   "description": "Прямая загрузка фотографий местности в Яндекс Карты.",
   "host_permissions": [
