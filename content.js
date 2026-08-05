@@ -1,202 +1,184 @@
 (() => {
-  "use strict";
+  'use strict';
 
-  const ROOT_ID = "ymph-root";
-  const STATUS_ID = "ymph-status";
-  const BUTTON_ID = "ymph-select-files";
-  const PICKER_ID = "ymph-own-file-picker";
-  const WAIT_TIMEOUT_MS = 10000;
+  const ROOT_ID = 'ymph-root';
+  const INPUT_ID = 'ymph-file-input';
+  const UPLOAD_URL = 'https://core-pht-proxy.maps.yandex.ru/v1/photos/my/upload';
+  const ACCEPT = 'image/jpeg,image/png,.heic,.heif';
 
-  function setStatus(message, type = "info") {
-    const status = document.getElementById(STATUS_ID);
-    if (!status) {
+  let root = null;
+  let button = null;
+  let status = null;
+  let input = null;
+  let isUploading = false;
+
+  function ensureUi() {
+    if (!document.body) {
       return;
     }
 
-    status.textContent = message;
-    status.dataset.type = type;
-  }
-
-  function findAddPhotoButton() {
-    const buttons = [...document.querySelectorAll('button[type="button"], button:not([type])')];
-
-    return buttons.find((button) => {
-      if (!(button instanceof HTMLButtonElement)) {
-        return false;
-      }
-
-      const text = (button.textContent || "").replace(/\s+/g, " ").trim();
-      const hasExpectedText = text === "Добавить фото местности";
-      const hasExpectedIcon = Boolean(
-        button.querySelector(".ugc-contribution-photos-view__icon")
-      );
-
-      return hasExpectedText || (text.includes("Добавить фото местности") && hasExpectedIcon);
-    }) || null;
-  }
-
-  function findYandexFileInput() {
-    const inputs = [...document.querySelectorAll('input[type="file"]')];
-
-    return inputs.find((input) => {
-      if (!(input instanceof HTMLInputElement)) {
-        return false;
-      }
-
-      if (input.id === PICKER_ID || input.closest(`#${ROOT_ID}`)) {
-        return false;
-      }
-
-      const application = input.closest('[role="application"]');
-      if (!application) {
-        return false;
-      }
-
-      const dropzone = application.querySelector(".add-media-view__dropzone");
-      if (!dropzone) {
-        return false;
-      }
-
-      const accept = (input.accept || "").toLowerCase();
-      return (
-        accept.includes("image/jpeg") ||
-        accept.includes("image/png") ||
-        accept.includes(".heic") ||
-        accept.includes(".heif") ||
-        accept.includes("image/*")
-      );
-    }) || null;
-  }
-
-  function waitForYandexFileInput(timeoutMs = WAIT_TIMEOUT_MS) {
-    const existingInput = findYandexFileInput();
-    if (existingInput) {
-      return Promise.resolve(existingInput);
-    }
-
-    return new Promise((resolve, reject) => {
-      const startedAt = Date.now();
-
-      const observer = new MutationObserver(() => {
-        const input = findYandexFileInput();
-        if (input) {
-          observer.disconnect();
-          clearInterval(timer);
-          resolve(input);
-        }
-      });
-
-      observer.observe(document.documentElement, {
-        childList: true,
-        subtree: true
-      });
-
-      const timer = window.setInterval(() => {
-        if (Date.now() - startedAt >= timeoutMs) {
-          observer.disconnect();
-          clearInterval(timer);
-          reject(new Error("Диалог загрузки Яндекса не появился."));
-        }
-      }, 250);
-    });
-  }
-
-  function createFileList(files) {
-    const transfer = new DataTransfer();
-    for (const file of files) {
-      transfer.items.add(file);
-    }
-    return transfer.files;
-  }
-
-  function assignFilesToYandexInput(input, files) {
-    input.files = createFileList(files);
-
-    input.dispatchEvent(new Event("input", {
-      bubbles: true,
-      composed: true
-    }));
-
-    input.dispatchEvent(new Event("change", {
-      bubbles: true,
-      composed: true
-    }));
-  }
-
-  async function sendSelectedFiles(files) {
-    if (!files.length) {
-      setStatus("Файлы не выбраны.");
+    const existing = document.getElementById(ROOT_ID);
+    if (existing) {
+      root = existing;
+      button = root.querySelector('.ymph-button');
+      status = root.querySelector('.ymph-status');
+      input = root.querySelector(`#${INPUT_ID}`);
       return;
     }
 
-    const addPhotoButton = findAddPhotoButton();
-    if (!addPhotoButton) {
-      setStatus(
-        "На странице не найдена штатная кнопка «Добавить фото местности».",
-        "error"
-      );
-      return;
-    }
-
-    try {
-      setStatus(`Выбрано файлов: ${files.length}. Открываю диалог Яндекса…`);
-
-      addPhotoButton.click();
-      const yandexInput = await waitForYandexFileInput();
-
-      assignFilesToYandexInput(yandexInput, files);
-      setStatus(`Передано в Яндекс: ${files.length} файл(ов).`, "success");
-    } catch (error) {
-      console.error("[Yandex Maps Photo Helper]", error);
-      setStatus(error instanceof Error ? error.message : "Не удалось передать файлы.", "error");
-    }
-  }
-
-  function createPanel() {
-    if (document.getElementById(ROOT_ID)) {
-      return;
-    }
-
-    const root = document.createElement("section");
+    root = document.createElement('div');
     root.id = ROOT_ID;
-    root.setAttribute("aria-label", "Помощник загрузки фотографий");
 
-    const title = document.createElement("div");
-    title.className = "ymp-title";
-    title.textContent = "Загрузка фото";
+    button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'ymph-button';
+    button.textContent = 'Добавить фото';
 
-    const button = document.createElement("button");
-    button.id = BUTTON_ID;
-    button.type = "button";
-    button.textContent = "Добавить фото";
+    status = document.createElement('div');
+    status.className = 'ymph-status';
+    status.textContent = 'Готово к загрузке';
 
-    const picker = document.createElement("input");
-    picker.id = PICKER_ID;
-    picker.type = "file";
-    picker.accept = "image/jpeg,image/png,.heic,.heif";
-    picker.multiple = true;
-    picker.hidden = true;
+    input = document.createElement('input');
+    input.id = INPUT_ID;
+    input.type = 'file';
+    input.accept = ACCEPT;
+    input.multiple = true;
+    input.hidden = true;
 
-    picker.addEventListener("change", () => {
-      const files = picker.files ? [...picker.files] : [];
-      picker.value = "";
-      void sendSelectedFiles(files);
-    });
+    button.addEventListener('click', onButtonClick);
+    input.addEventListener('change', onFilesSelected);
 
-    button.addEventListener("click", () => {
-      setStatus("Выберите фотографии для загрузки.");
-      picker.click();
-    });
-
-    const status = document.createElement("div");
-    status.id = STATUS_ID;
-    status.className = "ymp-status";
-    status.setAttribute("aria-live", "polite");
-    status.textContent = "Нажмите кнопку и выберите фотографии.";
-
-    root.append(title, button, picker, status);
-    document.documentElement.appendChild(root);
+    root.append(button, status, input);
+    document.body.appendChild(root);
   }
 
-  createPanel();
+  function onButtonClick() {
+    if (isUploading || !input) {
+      return;
+    }
+
+    input.value = '';
+    input.click();
+  }
+
+  async function onFilesSelected() {
+    const files = Array.from(input?.files || []);
+    if (files.length === 0) {
+      return;
+    }
+
+    setBusy(true);
+    let uploaded = 0;
+    const errors = [];
+
+    for (let index = 0; index < files.length; index += 1) {
+      const file = files[index];
+      setStatus(`Загрузка ${index + 1} из ${files.length}: ${file.name}`);
+
+      try {
+        const result = await uploadFile(file);
+        uploaded += 1;
+        console.info('[Yandex Maps Photo Helper] Загружено:', {
+          file: file.name,
+          photoId: result.id,
+          status: result.status
+        });
+      } catch (error) {
+        console.error('[Yandex Maps Photo Helper] Ошибка загрузки:', file.name, error);
+        errors.push(`${file.name}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+
+    setBusy(false);
+
+    if (errors.length === 0) {
+      setStatus(`Загружено: ${uploaded}. Фото отправлены на обработку Яндекса.`);
+    } else {
+      setStatus(`Загружено: ${uploaded}, ошибок: ${errors.length}`);
+      window.alert(`Не удалось загрузить некоторые файлы:\n\n${errors.join('\n')}`);
+    }
+  }
+
+  async function uploadFile(file) {
+    const filename = file.name || `photo-${Date.now()}.jpg`;
+    const mtimeSeconds = Math.floor((file.lastModified || Date.now()) / 1000);
+
+    const url = new URL(UPLOAD_URL);
+    url.searchParams.set('filename', filename);
+    url.searchParams.set('format', 'json');
+    url.searchParams.set('mtime', String(mtimeSeconds));
+
+    const response = await fetch(url.toString(), {
+      method: 'PUT',
+      credentials: 'include',
+      headers: {
+        'Content-Type': file.type || inferMimeType(filename)
+      },
+      body: file
+    });
+
+    const responseText = await response.text();
+    let responseBody = null;
+
+    if (responseText) {
+      try {
+        responseBody = JSON.parse(responseText);
+      } catch {
+        responseBody = responseText;
+      }
+    }
+
+    if (!response.ok) {
+      const details = typeof responseBody === 'string'
+        ? responseBody.slice(0, 300)
+        : JSON.stringify(responseBody);
+      throw new Error(`HTTP ${response.status}${details ? `: ${details}` : ''}`);
+    }
+
+    if (!responseBody || typeof responseBody !== 'object' || !responseBody.id) {
+      throw new Error('Яндекс вернул неожиданный ответ без идентификатора фотографии');
+    }
+
+    return responseBody;
+  }
+
+  function inferMimeType(filename) {
+    const lower = filename.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.heic')) return 'image/heic';
+    if (lower.endsWith('.heif')) return 'image/heif';
+    return 'image/jpeg';
+  }
+
+  function setBusy(busy) {
+    isUploading = busy;
+    ensureUi();
+    if (!button) return;
+    button.disabled = busy;
+    button.textContent = busy ? 'Загрузка…' : 'Добавить фото';
+  }
+
+  function setStatus(text) {
+    ensureUi();
+    if (status) status.textContent = text;
+  }
+
+  ensureUi();
+
+  const observer = new MutationObserver(() => {
+    if (!document.getElementById(ROOT_ID)) {
+      ensureUi();
+      setBusy(isUploading);
+    }
+  });
+
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+
+  window.addEventListener('pageshow', ensureUi);
+  window.addEventListener('popstate', ensureUi);
+
+  console.info('[Yandex Maps Photo Helper] content script запущен:', location.href);
 })();
