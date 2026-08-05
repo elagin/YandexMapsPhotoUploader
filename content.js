@@ -17,6 +17,7 @@
   let button = null;
   let status = null;
   let input = null;
+  let myPhotosButton = null;
   let isUploading = false;
 
   function ensureUi() {
@@ -30,6 +31,7 @@
       button = root.querySelector('.ymph-button');
       status = root.querySelector('.ymph-status');
       input = root.querySelector(`#${INPUT_ID}`);
+      myPhotosButton = root.querySelector('.ymph-myphotos');
       return;
     }
 
@@ -40,6 +42,12 @@
     button.type = 'button';
     button.className = 'ymph-button';
     button.textContent = 'Добавить фото';
+
+    myPhotosButton = document.createElement('button');
+    myPhotosButton.type='button';
+    myPhotosButton.className='ymph-button ymph-myphotos';
+    myPhotosButton.textContent='Мои фотографии';
+    myPhotosButton.addEventListener('click',()=>location.assign(`${location.origin}/maps/profile/ugc/photos?l=pht&photos_tab=account`));
 
     status = document.createElement('div');
     status.className = 'ymph-status';
@@ -55,7 +63,7 @@
     button.addEventListener('click', onButtonClick);
     input.addEventListener('change', onFilesSelected);
 
-    root.append(button, status, input);
+    root.append(button, myPhotosButton, status, input);
     document.body.appendChild(root);
   }
 
