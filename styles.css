@@ -1,0 +1,58 @@
+#ymph-root {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2147483647;
+  box-sizing: border-box;
+  width: 280px;
+  padding: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  color: #1f1f1f;
+  font-family: Arial, sans-serif;
+}
+
+#ymph-root .ymp-title {
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+#ymph-select-files {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: #4c8bf5;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#ymph-select-files:hover {
+  filter: brightness(0.96);
+}
+
+#ymph-select-files:active {
+  transform: translateY(1px);
+}
+
+#ymph-root .ymp-status {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #62676f;
+}
+
+#ymph-root .ymp-status[data-type="success"] {
+  color: #237a3b;
+}
+
+#ymph-root .ymp-status[data-type="error"] {
+  color: #b3261e;
+}

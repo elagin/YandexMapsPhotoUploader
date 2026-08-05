@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Yandex Maps Photo Helper",
+  "version": "0.1.3",
+  "description": "Позволяет выбрать фотографии одной кнопкой и передать их в штатный диалог загрузки фотографий местности Яндекс Карт.",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://yandex.ru/maps/*",
+        "https://www.yandex.ru/maps/*"
+      ],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
