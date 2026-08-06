@@ -17,6 +17,8 @@
         "https://maps.yandex.ru/*"
       ],
       "js": [
+        "content/uploader.js",
+        "content/upload-queue.js",
         "content/content.js"
       ],
       "css": [
