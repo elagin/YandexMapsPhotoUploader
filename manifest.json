@@ -16,8 +16,12 @@
         "https://www.yandex.ru/maps/*",
         "https://maps.yandex.ru/*"
       ],
-      "js": ["content.js"],
-      "css": ["styles.css"],
+      "js": [
+        "content/content.js"
+      ],
+      "css": [
+        "styles/panel.css"
+      ],
       "run_at": "document_idle"
     }
   ],
@@ -26,5 +30,17 @@
     "32": "icons/icon32.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/icon32.png"
+      ],
+      "matches": [
+        "https://yandex.ru/*",
+        "https://www.yandex.ru/*",
+        "https://maps.yandex.ru/*"
+      ]
+    }
+  ]
 }
