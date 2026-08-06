@@ -194,3 +194,42 @@
   line-height: 1.3 !important;
   overflow-wrap: anywhere !important;
 }
+
+.ymph-retry-item,
+.ymph-retry-failed {
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: #ffdc60 !important;
+  color: #111 !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+
+.ymph-retry-item {
+  margin-top: 8px !important;
+  padding: 6px 10px !important;
+  font-size: 11px !important;
+}
+
+.ymph-retry-failed {
+  width: 100% !important;
+  min-height: 36px !important;
+  margin-top: 10px !important;
+  padding: 8px 10px !important;
+  font-size: 12px !important;
+}
+
+.ymph-retry-item:hover:not(:disabled),
+.ymph-retry-failed:hover:not(:disabled) {
+  filter: brightness(0.97) !important;
+}
+
+.ymph-retry-item:disabled,
+.ymph-retry-failed:disabled {
+  cursor: default !important;
+  opacity: 0.65 !important;
+}
+
+.ymph-retry-failed[hidden] {
+  display: none !important;
+}

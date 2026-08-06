@@ -29,6 +29,7 @@
   let collapseButton = null;
   let collapseIcon = null;
   let queueList = null;
+  let retryFailedButton = null;
 
   const queue = new YMPH.UploadQueue({
     uploadFile: YMPH.uploader.uploadFile,
@@ -50,6 +51,7 @@
       collapseButton = root.querySelector('.ymph-collapse');
       collapseIcon = root.querySelector('.ymph-collapse-icon');
       queueList = root.querySelector('.ymph-queue');
+      retryFailedButton = root.querySelector('.ymph-retry-failed');
       return;
     }
 
@@ -81,6 +83,15 @@
     queueList.className = 'ymph-queue';
     queueList.hidden = true;
 
+    retryFailedButton = document.createElement('button');
+    retryFailedButton.type = 'button';
+    retryFailedButton.className = 'ymph-retry-failed';
+    retryFailedButton.textContent = 'Повторить загрузку файлов с ошибкой';
+    retryFailedButton.hidden = true;
+    retryFailedButton.addEventListener('click', () => {
+      void queue.retryFailed();
+    });
+
     input = document.createElement('input');
     input.id = INPUT_ID;
     input.type = 'file';
@@ -110,7 +121,7 @@
     });
 
     collapseButton.appendChild(collapseIcon);
-    panel.append(button, myPhotosButton, status, queueList, input);
+    panel.append(button, myPhotosButton, status, queueList, retryFailedButton, input);
     root.append(panel, collapseButton);
     document.body.appendChild(root);
 
@@ -213,6 +224,18 @@
       element.appendChild(error);
     }
 
+    if (item.status === 'failed') {
+      const retryButton = document.createElement('button');
+      retryButton.type = 'button';
+      retryButton.className = 'ymph-retry-item';
+      retryButton.textContent = 'Повторить';
+      retryButton.disabled = queue.running;
+      retryButton.addEventListener('click', () => {
+        void queue.retry(item.id);
+      });
+      element.appendChild(retryButton);
+    }
+
     return element;
   }
 
@@ -230,6 +253,7 @@
 
   function formatItemState(item) {
     if (item.status === 'uploading') return `${item.progress}%`;
+    if (item.status === 'failed') return '';
     return STATUS_LABELS[item.status] || item.status;
   }
 
@@ -237,8 +261,15 @@
     ensureUi();
     if (!button || !status) return;
 
+    if (queueList && queue.items.length > 0) renderQueue();
+
     button.disabled = running;
     button.textContent = running ? 'Загрузка…' : 'Добавить фото';
+
+    if (retryFailedButton) {
+      retryFailedButton.hidden = summary.failed === 0;
+      retryFailedButton.disabled = running;
+    }
 
     if (summary.total === 0) {
       status.textContent = 'Готово к загрузке';

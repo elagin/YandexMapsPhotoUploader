@@ -38,12 +38,14 @@
     }
 
     async start() {
-      if (this.running || this.items.length === 0) return;
+      if (this.running || !this.items.some(item => item.status === STATUS.WAITING)) return;
 
       this.running = true;
       this.emitQueueChange();
 
       for (const item of this.items) {
+        if (item.status !== STATUS.WAITING) continue;
+
         item.status = STATUS.UPLOADING;
         item.progress = 0;
         item.error = null;
@@ -67,6 +69,42 @@
 
       this.running = false;
       this.emitQueueChange();
+    }
+
+
+    async retry(itemId) {
+      if (this.running) return false;
+
+      const item = this.items.find(candidate => candidate.id === itemId);
+      if (!item || item.status !== STATUS.FAILED) return false;
+
+      this.resetFailedItem(item);
+      this.emitItemChange(item);
+      this.emitQueueChange();
+      await this.start();
+      return true;
+    }
+
+    async retryFailed() {
+      if (this.running) return false;
+
+      const failedItems = this.items.filter(item => item.status === STATUS.FAILED);
+      if (failedItems.length === 0) return false;
+
+      for (const item of failedItems) {
+        this.resetFailedItem(item);
+        this.emitItemChange(item);
+      }
+
+      this.emitQueueChange();
+      await this.start();
+      return true;
+    }
+
+    resetFailedItem(item) {
+      item.status = STATUS.WAITING;
+      item.progress = 0;
+      item.error = null;
     }
 
     getSummary() {
